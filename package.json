@@ -1,5 +1,5 @@
 {
-  "name": "jsonld-signatures",
+  "name": "digitalbazaar-jsonld-signatures",
   "version": "5.2.0",
   "description": "An implementation of the Linked Data Signatures specifications for JSON-LD in JavaScript.",
   "homepage": "https://github.com/digitalbazaar/jsonld-signatures",
@@ -94,7 +94,10 @@
     "test-karma": "karma start",
     "coverage": "cross-env NODE_ENV=test nyc --reporter=lcov --reporter=text-summary npm run test-node",
     "coverage-report": "nyc report",
-    "lint": "eslint '*.js' 'lib/*.js' 'lib/**/*.js' 'tests/*.js' 'tests/**/*.js'"
+    "lint": "eslint '*.js' 'lib/*.js' 'lib/**/*.js' 'tests/*.js' 'tests/**/*.js'",
+    "package:name": "node -pe \"require('./package.json').name\"",
+    "version:current": "node -pe \"require('./package.json').version\"",
+    "release": "npm publish --release --access restricted --new-version=\"$(yarn run -s version:current)\""
   },
   "nyc": {
     "exclude": [

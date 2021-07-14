@@ -1,0 +1,66 @@
+name: push-release
+
+on:
+  push:
+    tags:
+      - "release"
+
+jobs:
+  build:
+    # Don't run on release commit created by this workflow
+    if: "! startsWith(github.event.head_commit.message, 'chore(release)')"
+
+    name: Push release commit
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          # Must checkout using ci user personal access token in GH_TOKEN so that last step can commit to master
+          token: ${{ secrets.GH_TOKEN }}
+          # checkout master explicitly as workflow triggered on a tag which results in checkout of detached HEAD
+          ref: master
+
+      - name: Verify
+        # Check the HEAD of master has the same tag which triggered this workflow
+        run: |
+          git fetch --depth=1 origin +refs/tags/*:refs/tags/*
+          git tag --points-at HEAD | grep release
+
+      - name: Setup nodejs
+        uses: actions/setup-node@v1
+        with:
+          node-version: 12.x
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Build
+        run: |
+          yarn install --frozen-lockfile
+
+      - name: Temporarily disable "include administrators" branch protection
+        if: always()
+        env:
+          GH_USER: ci-mattr:${{ secrets.GH_TOKEN }}
+        run: |
+          curl --request DELETE --user $GH_USER https://api.github.com/repos/$GITHUB_REPOSITORY/branches/master/protection/enforce_admins
+
+      - name: Release
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPMJS_TOKEN }}
+        run: |
+          yarn version --no-git-tag-version --minor
+          yarn run prepublish
+          yarn run release
+          git config user.name "Mattr CI"
+          git config user.email "ci@mattr.global"
+          git commit -a -m "chore(release): publish $(yarn run -s version:current)"
+          git push origin master
+
+      - name: Re-enable "include administrators" branch protection
+        if: always() # Force to always run this step to ensure "include administrators" is always turned back on
+        env:
+          GH_USER: ci-mattr:${{ secrets.GH_TOKEN }}
+        run: |
+          curl --request POST --user $GH_USER https://api.github.com/repos/$GITHUB_REPOSITORY/master/protection/enforce_admins
