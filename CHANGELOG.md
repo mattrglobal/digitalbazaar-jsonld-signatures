@@ -1,5 +1,15 @@
 # jsonld-signatures ChangeLog
 
+## 7.0.0 - 2021-02-11
+
+### Changed
+- **BREAKING**: Update to `jsonld@4.0.1` dep (uses JSON-LD 1.1).
+
+## 6.0.0 - 2020-09-30
+
+### Changed
+- **BREAKING**: Drop support for Node.js v8.
+
 ## 5.2.0 - 2020-09-30
 
 ### Changed
